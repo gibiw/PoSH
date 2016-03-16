@@ -14,10 +14,10 @@
     "dnsNameForPublicIP": {
       "value": "gridnevdaip"
     },
-    "location":{
-      "value": "West US" 
+    "location": {
+      "value": "West US"
     },
-    "sizeOfDiskInGB":{
+    "sizeOfDiskInGB": {
       "value": "20"
     }
   }
