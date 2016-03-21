@@ -216,55 +216,164 @@ function OU {
     }
 # Функция создания OU и групп
 function createOU {
-    $logs.Text = $null
-    $progressBar.minimum = 1
-    $progressBar.maximum = 5
-    $progressBar.step = 1
-    $Path1=$settingsOU.PathCreateGroups
-    $path2=$settingsOU.PathCreateServers
-    $members=$settingsOU.DefaultAddMember
-    $Name=$Result1.Text
-    $OU=$InputFName.text
-    $groupname=$settingsOU.NameGroupn+$name+$settingsOU.NameGroupk
-    $path3=$settingsOU.PathCreateGroup+$name+','+$settingsOU.PathCreateGroups
-    LogAdd ("Импортируем модуль AD")
-    Start-Sleep -Seconds 1
-    Import-Module Activedirectory
-    $progressBar.performstep()
-    LogAdd ("Модуль AD импортирован")
-    Start-Sleep -Seconds 1
-    LogAdd ("Создаем OU "+$OU)
-    Start-Sleep -Seconds 1
-    $Error[0]=$null
-    New-ADOrganizationalUnit -Name $Name -Description $OU -Path $Path1
-    $progressBar.performstep()
-    Start-Sleep -Seconds 1
-    if($Error[0]){LogAdd ("Ошибка при создании OU в группах: " +$Error[0])}
-    $Error[0]=$null
-    New-ADOrganizationalUnit -Name $Name -Description $OU -Path $path2
-    $progressBar.performstep()
-    Start-Sleep -Seconds 1
-    if($Error[0]){LogAdd ("Ошибка при создании OU в серверах: " +$Error[0])}
-    LogAdd ("Создаем группу "+$groupname)
-    Start-Sleep -Seconds 1
-    $Error[0]=$null
-    New-ADGroup -Path $path3 -Name $groupname -GroupScope Universal -GroupCategory Security
-    $progressBar.performstep()
-    Start-Sleep -Seconds 1
-    if($Error[0]){LogAdd ("Ошибка при создании группы: " +$Error[0])}
-    $member=$members -split ','
-    foreach ($memb in $member){
-        $Error[0]=$null
-        Get-ADGroup $groupname | Add-ADGroupMember -Members $memb
+    param(
+        # Путь где будет создана OU с ресурсной группой
+        [Parameter(Mandatory=$true)]
+        [string]
+        $PathCreateGroups=$settingsOU.PathCreateGroups,
+        
+        # Путь где будет создана OU с серверами
+        [Parameter(Mandatory=$true)]
+        [string]
+        $PathCreateServers=$settingsOU.PathCreateServers,
+        
+        # Путь где будет создана ресурсная группа
+        [Parameter(Mandatory=$true)]
+        [string]
+        $PathCreateGroup=$settingsOU.PathCreateGroup,
+        
+        # Имя создаваемой группы (название ИС + NameGroupk)
+        [Parameter(Mandatory=$true)]
+        [string]
+        $NameGroupk=$settingsOU.NameGroupk,
+        
+        # Названия групп, которые будут по умолчанию включеный в созданную группу
+        [Parameter()]
+        [string]
+        $DefaultAddMember=$settingsOU.DefaultAddMember
+        
+    )
+    begin{
+        $logs.Text = $null
+        $progressBar.minimum = 1
+        $progressBar.maximum = 8
+        $progressBar.step = 1
+        $Name=$Result1.Text
+        $OU=$InputFName.text
+        $groupname=$name+$NameGroupk
+        $path3=$PathCreateGroup+$name+','+$PathCreateGroups
+        }#end begin
+    process{
+        try {
+            LogAdd ("Импортируем модуль AD")
+            if((Get-Module).name -cnotcontains 'ActiveDirectory'){
+                Import-Module ActiveDirectory -ErrorAction Stop
+                }#end if
+            LogAdd ("Модуль AD импортирован")  
+            }#end try
+        catch [System.Exception] {
+            LogAdd ( 'Ошибка при загрузке модуля Active Directory: ' + $_ )
+            break 
+            }#end catch
+        $progressBar.performstep()
         Start-Sleep -Seconds 1
-        if($Error[0]){LogAdd ("Ошибка при добавлении $memb в группу $groupname : " +$Error[0])}
-        }
-    $progressBar.performstep()
-    Start-Sleep -Seconds 1
-    LogAdd ("OUs и группы созданы")
-    get-date >> $logpath1
-    $Logs.text >> $logpath1
-    }
+        LogAdd ("Создаем OU "+$OU)
+        Start-Sleep -Seconds 1
+        try {
+            New-ADOrganizationalUnit -Name $Name -Description $OU -Path $PathCreateGroups -ErrorAction Stop
+            }#end try
+        catch [System.Exception] {
+            LogAdd ("Ошибка при создании OU в группах: " +$_)
+            break
+            }#end catch
+        $progressBar.performstep()
+        Start-Sleep -Seconds 1
+        try {
+            New-ADOrganizationalUnit -Name $Name -Description $OU -Path $PathCreateServers -ErrorAction Stop
+            }#end try
+        catch [System.Exception] {
+            LogAdd ("Ошибка при создании OU в серверах: " +$_)
+            break
+            }#end catch
+        $progressBar.performstep()
+        Start-Sleep -Seconds 1
+        LogAdd ("Создаем группу "+$groupname)
+        Start-Sleep -Seconds 1
+        try {
+            New-ADGroup -Path $path3 -Name $groupname -GroupScope Universal -GroupCategory Security -ErrorAction Stop
+            }#end try
+        catch [System.Exception] {
+            LogAdd ("Ошибка при создании группы: " +$_)
+            break
+            }#end catch
+        $progressBar.performstep()
+        Start-Sleep -Seconds 1
+        LogAdd ("Создаем группу U_"+$groupname)
+        Start-Sleep -Seconds 1
+        try {
+            $Usergroupname="U_"+$groupname
+            New-ADGroup -Path $path3 -Name $Usergroupname -GroupScope Universal -GroupCategory Security -ErrorAction Stop
+            }#end try
+        catch [System.Exception] {
+            LogAdd ("Ошибка при создании группы: " +$_)
+            continue
+            }#end catch
+        $progressBar.performstep()
+        Start-Sleep -Seconds 1
+                LogAdd ("Создаем группу U_"+$groupname+"_Managers")
+        Start-Sleep -Seconds 1
+        try {
+            $CMgroupname="U_"+$groupname +"_Managers"
+            New-ADGroup -Path $path3 -Name $CMgroupname -GroupScope Universal -GroupCategory Security -ErrorAction Stop
+            }#end try
+        catch [System.Exception] {
+            LogAdd ("Ошибка при создании группы: " +$_)
+            continue
+            }#end catch
+        $progressBar.performstep()
+        Start-Sleep -Seconds 1    
+        $guid =[guid]'bf9679c0-0de6-11d0-a285-00aa003049e2'
+        $user = New-Object System.Security.Principal.NTAccount("passport\$CMgroupname")
+        $sid =$user.translate([System.Security.Principal.SecurityIdentifier])
+        $DNUserGroup=(Get-ADGroup -Identity $Usergroupname).DistinguishedName
+        $acl = Get-Acl ad:"$DNUserGroup"
+        $ctrl =[System.Security.AccessControl.AccessControlType]::Allow
+        $rights =[System.DirectoryServices.ActiveDirectoryRights]::WriteProperty -bor[System.DirectoryServices.ActiveDirectoryRights]::ExtendedRight
+        $intype =[System.DirectoryServices.ActiveDirectorySecurityInheritance]::None
+        #set the ManagedBy property
+        $group =[adsi]"LDAP://$DNUserGroup"
+        $DNCMGroup=(Get-ADGroup -Identity $CMgroupname).DistinguishedName
+        $group.put("ManagedBy","$DNCMGroup")
+        $group.setinfo()
+        #create the new rule and add the rule
+        $rule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($sid,$rights,$ctrl,$guid)
+        $acl.AddAccessRule($rule)
+        Set-Acl -acl $acl -path ad:"$DNUserGroup"
+        $progressBar.performstep()
+        Start-Sleep -Seconds 1
+        if ($DefaultAddMember){
+            if ($DefaultAddMember -match ','){
+                $member=$DefaultAddMember -split ','
+                foreach ($memb in $member){
+                    try {
+                        Get-ADGroup $groupname -ErrorAction Stop | Add-ADGroupMember -Members $memb -ErrorAction Stop
+                        Start-Sleep -Seconds 1
+                        }#end try
+                    catch [System.Exception] {
+                        LogAdd ("Ошибка при добавлении $memb в группу $groupname : " +$_)
+                        continue 
+                        }#end catch
+                    }#end foreach
+                }#end if ','
+            else {
+                try {
+                    Get-ADGroup $groupname -ErrorAction Stop | Add-ADGroupMember -Members $DefaultAddMember -ErrorAction Stop
+                    Start-Sleep -Seconds 1
+                    }#end try
+                catch [System.Exception] {
+                    LogAdd ("Ошибка при добавлении $DefaultAddMember в группу $groupname : " + $_)
+                    continue 
+                    }#end catch    
+                }#end else
+            }#end if
+        
+        $progressBar.performstep()
+        Start-Sleep -Seconds 1
+        LogAdd ("OUs и группы созданы")
+        get-date >> $logpath1
+        $Logs.text >> $logpath1
+        }#end process
+    }#end function 
 # Функция кнопки "Обзор" и вывода текста в бокс ListBox (создание компов)
 function Browse {
     $ListBox.Items.clear()
@@ -301,51 +410,6 @@ function browseFolderf{
     $browsef.ShowDialog()
     $filesr.text = $browsef.selectedPath
     }
-# Функция создания записей в ДНС
-function new-dnsrecord { 
-    param( 
-        [string]$server, 
-        [string]$fzone, 
-        [string]$rzone, 
-        [string]$computer, 
-        [string]$address, 
-        [string]$alias, 
-        [string]$maildomain, 
-        [int]$priority, 
-        [switch]$arec, 
-        [switch]$ptr, 
-        [switch]$cname, 
-        [switch]$mx 
-    ) 
-    ## split the server fqdn and address 
-        $srvr = $server -split "\." 
-        $addr = $address -split "\." 
-
-        $rec = [WmiClass]"\\$($srvr[0])\root\MicrosoftDNS:MicrosoftDNS_ResourceRecord"  
-    ## 
-    ## create records 
-    ##  
-    ## A 
-        if ($arec){ 
-            $text = "$computer IN A $address"  
-            $rec.CreateInstanceFromTextRepresentation($server, $fzone, $text)  
-        } 
-    ## CNAME 
-        if ($cname){ 
-            $text = "$alias IN CNAME $computer"  
-            $rec.CreateInstanceFromTextRepresentation($server, $fzone, $text)  
-        } 
-    ## PTR 
-        if ($ptr){ 
-            $text = "$($addr[3]).$rzone IN PTR $computer"  
-            $rec.CreateInstanceFromTextRepresentation($server, $rzone, $text)  
-        } 
-    ## MX 
-    if ($mx){ 
-        $text = "$maildomain IN MX $priority $computer"  
-        $rec.CreateInstanceFromTextRepresentation($server, $fzone, $text)  
-        } 
-        }
 #Функций создания учетных записей компьютеров
 function createCMP {
     [CmdletBinding()]

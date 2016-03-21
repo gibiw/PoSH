@@ -24,8 +24,7 @@
         <PathCreateServers>OU=Servers,OU=DataCenterEM01,DC=passport,DC=local</PathCreateServers>
         Путь где будет создана ресурсная группа ($name - название ИС)
         <PathCreateGroup>OU=</PathCreateGroup>
-        Имя создаваемой группы ($name - название ИС)
-        <NameGroupn>IS_</NameGroupn>
+        Имя создаваемой группы (название ИС + NameGroupk)
         <NameGroupk>_Admins</NameGroupk>
         Названия групп, которые будут по умолчанию включеный в созданную группу
         <DefaultAddMember>EM_linux_Admins,EM_DataCenter_Admins</DefaultAddMember>
