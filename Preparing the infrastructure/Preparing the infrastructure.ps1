@@ -8,8 +8,13 @@ $logpath2=$PSfileRoot+"\logCMP.txt"
 $logpath3=$PSfileRoot+"\logUsers.txt"
 $imagepath=$PSfileRoot+"\logo.jpg"
 
-[xml] $Config = Get-Content $rootpath -Encoding UTF8
-if($Error[0]){LogAdd ("Ошибка при импорте конфигурации: " +$Error[0])}
+try {
+    [xml] $Config = Get-Content $rootpath -Encoding UTF8
+    }
+catch [System.Exception] {
+    LogAdd ("Ошибка при импорте конфигурации: " +$Error[0])
+    break   
+    }
 $settingsOU = $Config.selectnodes(‘Main/CreateOU’)
 $settingsCMP = $Config.selectnodes(‘Main/CreateCMP’)
 $settingsUser = $Config.selectnodes(‘Main/CreateUsers’) 
@@ -343,101 +348,191 @@ function new-dnsrecord {
         }
 #Функций создания учетных записей компьютеров
 function createCMP {
-    $logs.text = $null
-    $SMTPServerInternal=$settingsUtil.SMTPServerInternal
-    $SMTPServerInternalPort=$settingsUtil.SMTPServerInternalPort
-    $InternalAddress=$settingsUtil.InternalAddress
-    LogAdd ("Импортируем модуль AD")
-    Import-Module ActiveDirectory
-    LogAdd ("Модуль AD импортирован")
-    $comps = Import-Csv -Delimiter ";" -Path $InputFName4.Text
-    $progressBar1.minimum = 0
-    $progressBar1.maximum =3+$comps.ComputerName.count*2
-    $progressBar1.step = 1
-    $OU = $Comps.IS | select -First 1
-    $folder = $ou
-    $groupname = $settingsCMP.NameGroupn+$OU+$settingsCMP.NameGroupk
-    $groupname1 = $OU+$settingsCMP.NameGroupk
-    $folderPath = $keysr.text +"\"+$folder
-    LogAdd ("Создаем папку "+$ou)
-    $progressBar1.performstep()
-    Start-Sleep -Seconds 1
-    $Error[0]=$null
-    if(Test-Path -Path $folderPath){LogAdd ("Папка $ou уже существует")}
-    else{ 
-        New-Item -Path $folderPath -ItemType "directory"
-        LogAdd ("Папка $ou создана")
-        }
-    if($Error[0]){LogAdd ("Ошибка при создании папки: " +$Error[0])}
-    LogAdd ("Получаем информацию о группе "+$GroupName)
-    $Error[0]=$null
-    Start-Sleep -Seconds 1
-    $CanonicalName = (Get-ADGroup -Filter {Name -like $groupname -or Name -like $groupname1} -Properties canonicalname).DistinguishedName
-    if($Error[0]){LogAdd ("Ошибка при поиске группы: " +$Error[0])}
-    $txtPath = $folderPath+"\"+$GroupName+".txt"
-    Start-Sleep -Seconds 1
-    $CanonicalName > $txtPath
-    $dnsZone = “passport.local”
-    $progressBar1.performstep()
-    Start-Sleep -Seconds 1
-    LogAdd ("Начинаем создавать учетки")
-    Foreach($CurrentComputer in $Comps) {
-        $ComputerName = $CurrentComputer.ComputerName
-        $hostA = $ComputerName +".passport.local"
-        $msSFU30NisDomain = $CurrentComputer.msSFU30NisDomain
-        $SamAccountName = $CurrentComputer.SamAccountName
-        $fullName = $SamAccountName
-        $OU = $CurrentComputer.OU
-        $Description = $CurrentComputer.Description
-        $ipHostNumber = $CurrentComputer.ipHostNumber
-        $IP = $ipHostNumber
-        $Error[0]=$null
-        New-ADComputer –Name $ComputerName -SamAccountName $SamAccountName –Path $OU -Description $Description -OtherAttributes @{msSFU30NisDomain = $msSFU30NisDomain;ipHostNumber = $ipHostNumber}
-        if($Error[0]){LogAdd ("Ошибка при создании компьютера $SamAccountName : " +$Error[0])}
-        else {LogAdd ("Учетная запись $ComputerName создана")}
-        $Error[0]=$null
-        new-dnsrecord -server "is129-bi-dc01" -fzone $dnsZone -address $IP -arec -computer $hostA
-        if($Error[0]){LogAdd ("Ошибка при добавлении записи компьютера $SamAccountName в ДНС: " +$Error[0])}
-        else{LogAdd ("Запись компьютера $ComputerName добавлена в DNS")}
-        $progressBar1.performstep()
-        Start-Sleep -Seconds 1
-        }
+    [CmdletBinding()]
+    param(
+        # Почтовый сервер для отправки почты на внутреннее адреса 
+        [Parameter(Mandatory=$true)]
+        [string]
+        $SMTPServerInternal=$settingsUtil.SMTPServerInternal,
+        
+        # Порт почтового сервера для отправки почты на внутреннее адреса
+        [Parameter(Mandatory=$true)]
+        [string]
+        $SMTPServerInternalPort=$settingsUtil.SMTPServerInternalPort,
+        
+        # Использование SSL для отправки на внутреннее адреса
+        [Parameter(Mandatory=$true)]
+        [string]
+        $SMTPServerInternalSSL=$settingsUtil.SMTPServerInternalSSL,
+        
+        # Адрес для отправки сообщений по внутреней почте
+        [Parameter(Mandatory=$true)]
+        [string]
+        $InternalAddress=$settingsUtil.InternalAddress,
+        
+        # Зона на ДНС сервере, в которой будут создаваться А записи linux серверов
+        [Parameter(Mandatory=$true)]
+        [string]
+        $DNSZone=$settingsCMP.DNSZone,
+        
+        # Сервер, который хостит необходимую ДНС зону (DNSZone)
+        [Parameter(Mandatory=$true)]
+        [string]
+        $DNSServer=$settingsCMP.DNSServer,
+        
+        # Группа рассылки, на которую будут отправлены файлы ключей
+        [Parameter(AttributeValues)]
+        [string]
+        $KeyRecipient=$settingsCMP.KeyRecipient
+       
+        )
+    begin{
+        $logs.text = $null
+        try {
+            LogAdd ("Импортируем модуль AD")
+            if((Get-Module).name -cnotcontains 'ActiveDirectory'){
+                Import-Module ActiveDirectory -ErrorAction Stop
+                }   
+            }#end try
+        catch [System.Exception] {
+            LogAdd ( 'Ошибка при загрузке модуля Active Directory: ' + $_ )
+            break 
+            }#end catch
+        try {
+            $comps = Import-Csv -Delimiter ";" -Path $InputFName4.Text -ErrorAction Stop
+            }#end try
+        catch [System.Exception] {
+            LogAdd ('Не удалось загрузить параметры из файла: ' + $_)
+            break
+            }#end catch
+        }#end begin
 
-    Start-Sleep -Seconds 30
-    LogAdd ("Начинаем создавать ключи")
-    Foreach($CurrentComputer in $Comps) {
-        $SamAccountName = $CurrentComputer.SamAccountName
-        $fullName = $SamAccountName
-        $fullName = "host/"+$fullName+".passport.local@PASSPORT.LOCAL"
-        $keypath = $folderPath+"\"+$SamAccountName+".keytab"
-        $keyhost = "PASSPORT\"+$SamAccountName+"$"
-        setspn -a $fullName $SamAccountName
-        setspn -L $SamAccountName
-        echo y | ktpass /princ $fullName /out $keypath /crypto all /ptype KRB5_NT_PRINCIPAL -desonly /mapuser $keyhost +rndPass
-        LogAdd ("Ключ для компьютера $SamAccountName создан")
+    Process {
+        $progressBar1.minimum = 0
+        $progressBar1.maximum =3+$comps.ComputerName.count*2
+        $progressBar1.step = 1
+        $OU = $Comps.IS | select -First 1
+        $folder = $ou
+        $groupname = $settingsCMP.NameGroupn+$OU+$settingsCMP.NameGroupk
+        $groupname1 = $OU+$settingsCMP.NameGroupk
+        $folderPath = $keysr.text +"\"+$folder
+        LogAdd ("Создаем папку "+$ou)
         $progressBar1.performstep()
         Start-Sleep -Seconds 1
-        }
-    if ($CheckBox1.Checked -eq $true) {
-                cd $keysr.text
-                $SevenZipExecutablePath = "C:\Program files\7-Zip\7z.exe"
-                $Arg1="a"
-                $Arg2="$folder.7z"
-                $Arg3=$folderPath
-                & $SevenZipExecutablePath ($Arg1,$Arg2,$Arg3)
-                $Subject = "Ключи для ИС "+$folder
-                $Attachments = "C:\Work\keys\$folder.7z"
-                $Encoding = [System.Text.Encoding]::UTF8
-                $Error[0]=$null
-                $body = "Ключи во вложении"
-                send-mailmessage -SmtpServer $SMTPServerInternal -From InternalAddress -Subject $Subject -To sysop.datacenter@e-moskva.ru -Body $body -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerInternalPort -Encoding $Encoding
-                if($Error[0]){LogAdd ("Ошибка при отправке сообщения с ключами : " +$Error[0])}
-                }
-    $progressBar1.performstep()
-    LogAdd ("Ключи созданы! Готово")
-    get-date >> $logpath2
-    $Logs.text >> $logpath2
-    }
+        if(Test-Path -Path $folderPath){LogAdd ("Папка $ou уже существует")}
+        else{ 
+            try {
+                New-Item -Path $folderPath -ItemType "directory" -ErrorAction Stop
+                LogAdd ("Папка $ou создана")
+                }#end try
+            catch [System.Exception] {
+                LogAdd ("Ошибка при создании папки: " + $_)
+                break
+                }#end catch
+            
+            }#end else
+        LogAdd ("Получаем информацию о группе "+$GroupName)
+        Start-Sleep -Seconds 1
+        try {
+            $CanonicalName = (Get-ADGroup -Filter {Name -like $groupname -or Name -like $groupname1} -Properties canonicalname -ErrorAction Stop).DistinguishedName
+            }#end try
+        catch [System.Exception] {
+            LogAdd ("Ошибка при поиске группы: " +$_)
+            break
+            }#end catch
+        $txtPath = $folderPath+"\"+$GroupName+".txt"
+        Start-Sleep -Seconds 1
+        $CanonicalName > $txtPath
+        $dnsZone = “passport.local”
+        $progressBar1.performstep()
+        Start-Sleep -Seconds 1
+        LogAdd ("Начинаем создавать учетки")
+        Foreach($CurrentComputer in $Comps) {
+            $ComputerName = $CurrentComputer.ComputerName
+            $hostA = $ComputerName +".passport.local"
+            $msSFU30NisDomain = $CurrentComputer.msSFU30NisDomain
+            $SamAccountName = $CurrentComputer.SamAccountName
+            $fullName = $SamAccountName
+            $OU = $CurrentComputer.OU
+            $Description = $CurrentComputer.Description
+            $ipHostNumber = $CurrentComputer.ipHostNumber
+            $IP = $ipHostNumber
+            try {
+                New-ADComputer –Name $ComputerName -SamAccountName $SamAccountName –Path $OU -Description $Description `
+                -OtherAttributes @{msSFU30NisDomain = $msSFU30NisDomain;ipHostNumber = $ipHostNumber} -ErrorAction Stop
+                LogAdd ("Учетная запись $ComputerName создана")
+                }#end try
+            catch [System.Exception] {
+                LogAdd ("Ошибка при создании компьютера $SamAccountName : " +$_)
+                continue
+                }#end catch
+            try {
+               if((Get-Module).name -cnotcontains 'DnsServer'){
+                    Import-Module -Name DnsServer
+                    }#end if
+               Add-DnsServerResourceRecordA -Name $SamAccountName -ZoneName $DNSZone -AllowUpdateAny -IPv4Address $IP -ComputerName $DNSServer -ErrorAction Stop   
+               LogAdd ("Запись компьютера $ComputerName добавлена в DNS")
+               }#end try
+            catch [System.Exception] {
+               LogAdd ("Ошибка при добавлении записи компьютера $SamAccountName в ДНС: " + $_)
+               continue 
+               }#end catch
+            $progressBar1.performstep()
+            Start-Sleep -Seconds 1
+            }#end foreach 
+
+        Start-Sleep -Seconds 30
+        LogAdd ("Начинаем создавать ключи")
+        Foreach($CurrentComputer in $Comps) {
+            $SamAccountName = $CurrentComputer.SamAccountName
+            $fullName = $SamAccountName
+            $fullName = "host/"+$fullName+".passport.local@PASSPORT.LOCAL"
+            $keypath = $folderPath+"\"+$SamAccountName+".keytab"
+            $keyhost = "PASSPORT\"+$SamAccountName+"$"
+            setspn -a $fullName $SamAccountName
+            setspn -L $SamAccountName
+            echo y | ktpass /princ $fullName /out $keypath /crypto all /ptype KRB5_NT_PRINCIPAL -desonly /mapuser $keyhost +rndPass
+            LogAdd ("Ключ для компьютера $SamAccountName создан")
+            $progressBar1.performstep()
+            Start-Sleep -Seconds 1
+            }#end foreach
+        if ($CheckBox1.Checked -eq $true) {
+                    cd $keysr.text
+                    $SevenZipExecutablePath = "C:\Program files\7-Zip\7z.exe"
+                    $Arg1="a"
+                    $Arg2="$folder.7z"
+                    $Arg3=$folderPath
+                    & $SevenZipExecutablePath ($Arg1,$Arg2,$Arg3)
+                    $Subject = "Ключи для ИС "+$folder
+                    $Attachments = "$folderPath\$folder.7z"
+                    $Encoding = [System.Text.Encoding]::UTF8
+                    $Error[0]=$null
+                    $body = "Ключи во вложении"
+                    if($SMTPServerInternalSSL -eq $true){
+                        try {
+                            send-mailmessage -SmtpServer $SMTPServerInternal -From InternalAddress -Subject $Subject -To $KeyRecipient -Body $body -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerInternalPort -Encoding $Encoding -UseSsl
+                            LogAdd ("Ключи успешно отправлены")    
+                            }#end try
+                        catch [System.Exception] {
+                            LogAdd ("Ошибка при отправке сообщения с ключами : " + $_)
+                            }#end catch    
+                        }#end if
+                    else {
+                        try {
+                            send-mailmessage -SmtpServer $SMTPServerInternal -From InternalAddress -Subject $Subject -To $KeyRecipient -Body $body -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerInternalPort -Encoding $Encoding
+                            LogAdd ("Ключи успешно отправлены")    
+                            }#end try
+                        catch [System.Exception] {
+                            LogAdd ("Ошибка при отправке сообщения с ключами : " + $_)
+                            }#end catch    
+                       }#end else
+                    }#end if
+        $progressBar1.performstep()
+        LogAdd ("Ключи созданы! Готово")
+        get-date >> $logpath2
+        $Logs.text >> $logpath2
+        }#end process
+    }#end function
 #функиция авторизации для отправки сообщения
 function Check {
     if (!$CheckBox.Checked) {$logName.Enabled = $false; $InputFpass.Enabled = $false} 

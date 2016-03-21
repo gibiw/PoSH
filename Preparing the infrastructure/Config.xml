@@ -5,10 +5,14 @@
         <SMTPServerExternal>pochta.mos.ru</SMTPServerExternal>
         Порт почтового сервера для отправки почты на внешние адреса
         <SMTPServerExternalPort>587</SMTPServerExternalPort>
+        Использование SSL для отправки на внешние адреса
+        <SMTPServerExternalSSL>true</SMTPServerExternalSSL>
         Почтовый сервер для отправки почты на внутреннее адреса
         <SMTPServerInternal>post.e-moskva.ru</SMTPServerInternal>
         Порт почтового сервера для отправки почты на внутреннее адреса
         <SMTPServerInternalPort>25</SMTPServerInternalPort>
+        Использование SSL для отправки на внутреннее адреса
+        <SMTPServerInternalSSL>false</SMTPServerInternalSSL>
         Адрес для отправки сообщений по внутреней почте
         <InternalAddress>windows_support@e-moskva.ru</InternalAddress>
         </UtilSettings>
@@ -31,6 +35,12 @@
         Имя ресурсной группы
         <NameGroupn>IS_</NameGroupn>
         <NameGroupk>_Admins</NameGroupk>
+        Зона на ДНС сервере, в которой будут создаваться А записи linux серверов
+        <DNSZone>passport.local</DNSZone>
+        Сервер, который хостит необходимую ДНС зону (DNSZone)
+        <DNSServer>is129-bi-dc01.passport.local</DNSServer>
+        Группа рассылки, на которую будут отправлены файлы ключей
+        <KeyRecipient>sysop.datacenter@e-moskva.ru</KeyRecipient>
         </CreateCMP>
     Настройки создания пользователей
     <CreateUsers>
