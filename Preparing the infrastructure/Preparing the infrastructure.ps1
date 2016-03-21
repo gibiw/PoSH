@@ -1,8 +1,7 @@
 ﻿[void][Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
 
 # определение функций#############################################################################################################
-
-$PSfileRoot = "C:\work\infa"
+$PSfileRoot = "C:\Users\gridnev\OneDrive\GitHub\PoSH\Preparing the infrastructure"
 $rootpath=$PSfileRoot+"\Config.xml"
 $logpath1=$PSfileRoot+"\logOU.txt"
 $logpath2=$PSfileRoot+"\logCMP.txt"
@@ -14,6 +13,8 @@ if($Error[0]){LogAdd ("Ошибка при импорте конфигураци
 $settingsOU = $Config.selectnodes(‘Main/CreateOU’)
 $settingsCMP = $Config.selectnodes(‘Main/CreateCMP’)
 $settingsUser = $Config.selectnodes(‘Main/CreateUsers’) 
+$settingsUtil = $Config.selectnodes(‘Main/UtilSettings’)
+
 
 $Error[0]=$null
 #Создание графического интерфейса
@@ -342,8 +343,10 @@ function new-dnsrecord {
         }
 #Функций создания учетных записей компьютеров
 function createCMP {
-    Start-Transcript -Path $logpath2 -Append -Force
     $logs.text = $null
+    $SMTPServerInternal=$settingsUtil.SMTPServerInternal
+    $SMTPServerInternalPort=$settingsUtil.SMTPServerInternalPort
+    $InternalAddress=$settingsUtil.InternalAddress
     LogAdd ("Импортируем модуль AD")
     Import-Module ActiveDirectory
     LogAdd ("Модуль AD импортирован")
@@ -427,14 +430,13 @@ function createCMP {
                 $Encoding = [System.Text.Encoding]::UTF8
                 $Error[0]=$null
                 $body = "Ключи во вложении"
-                send-mailmessage -SmtpServer post.e-moskva.ru -From keys@e-moskva.ru -Subject $Subject -To sysop.datacenter@e-moskva.ru -Body $body -Attachments $attachments -DeliveryNotificationOption OnSuccess -Encoding $Encoding
+                send-mailmessage -SmtpServer $SMTPServerInternal -From InternalAddress -Subject $Subject -To sysop.datacenter@e-moskva.ru -Body $body -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerInternalPort -Encoding $Encoding
                 if($Error[0]){LogAdd ("Ошибка при отправке сообщения с ключами : " +$Error[0])}
                 }
     $progressBar1.performstep()
     LogAdd ("Ключи созданы! Готово")
     get-date >> $logpath2
     $Logs.text >> $logpath2
-    Stop-Transcript
     }
 #функиция авторизации для отправки сообщения
 function Check {
@@ -444,6 +446,11 @@ function Check {
 #Функция создания пользователей
 function createuser {
     $logs.Text =$null
+    $SMTPServerExternal=$settingsUtil.SMTPServerExternal
+    $SMTPServerExternalPort=$settingsUtil.SMTPServerExternalPort
+    $SMTPServerInternal=$settingsUtil.SMTPServerInternal
+    $SMTPServerInternalPort=$settingsUtil.SMTPServerInternalPort
+    $InternalAddress=$settingsUtil.InternalAddress
     $body1=$settingsUser.Body1
     $body2=$settingsUser.Body2
     $body3=$settingsUser.Body3
@@ -623,7 +630,7 @@ function createuser {
                     Логин: $SAM
                     Пароль: $Password
 "@
-                    send-mailmessage -SmtpServer post.e-moskva.ru -From new_user@e-moskva.ru -Subject 'Задания на изменение' -To access@e-moskva.ru -Body $body -DeliveryNotificationOption OnSuccess -Encoding $Encoding
+                    send-mailmessage -SmtpServer $SMTPServerInternal -From $InternalAddress -Subject 'Задания на изменение' -To access@e-moskva.ru -Body $body -DeliveryNotificationOption OnSuccess -Port $SMTPServerInternalPort -Encoding $Encoding
                     LogAdd ("Данные отправлены на адрес access@e-moskva.ru")       
                     } 
                 Else{
@@ -667,7 +674,7 @@ function createuser {
                     }
                 $Encoding = [System.Text.Encoding]::UTF8
                 $Error[0]=$null
-                send-mailmessage -SmtpServer pochta.mos.ru -From $from -Subject $Subject -To $to -Body $body -Credential $mycreds -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port 587 -UseSsl -Encoding $Encoding
+                send-mailmessage -SmtpServer $SMTPServerExternal -From $from -Subject $Subject -To $to -Body $body -Credential $mycreds -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerExternalPort -UseSsl -Encoding $Encoding
                 if($Error[0]){LogAdd ("Ошибка при отправке сообщения пользователю $sam : " +$Error[0])}
                 
         }
@@ -750,6 +757,8 @@ function resetpassword{
     $sendemail=$false
     $from=$null
     $mycreds=$null
+    $SMTPServerExternal=$settingsUtil.SMTPServerExternal
+    $SMTPServerExternalPort=$settingsUtil.SMTPServerExternalPort
     $from = $logName111.text
     $secpasswd1 = $InputFpass111.text
     $fileuser=$settingsUser.filetext
@@ -801,7 +810,7 @@ function resetpassword{
                     $Subject='Новые учетные данные для домена passport.local'
                     $Attachments = "C:\Work\New_users\Reset_password\$sam.7z"
                     $Encoding = [System.Text.Encoding]::UTF8
-                    send-mailmessage -SmtpServer pochta.mos.ru -From $from -Subject $Subject -To $EmailAddress -Body $body -Credential $mycreds -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port 587 -UseSsl -Encoding $Encoding
+                    send-mailmessage -SmtpServer $SMTPServerExternal -From $from -Subject $Subject -To $EmailAddress -Body $body -Credential $mycreds -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerExternalPort -UseSsl -Encoding $Encoding
                     LogAdd ("Письмо отправлено")
                     }
 
@@ -810,6 +819,7 @@ function Check1 {
     if (!$CheckBox11.Checked) {$logName111.Enabled = $false; $InputFpass111.Enabled = $false} 
     else {$logName111.Enabled = $true; $InputFpass111.Enabled = $true}
     }
+
 #Иконка
 $Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($PSHOME + "\powershell.exe")
 #Объявление основной формы

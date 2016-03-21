@@ -1,4 +1,18 @@
 ﻿<Main>
+    Настройки утилиты
+    <UtilSettings>
+        Почтовый сервер для отправки почты на внешние адреса
+        <SMTPServerExternal>pochta.mos.ru</SMTPServerExternal>
+        Порт почтового сервера для отправки почты на внешние адреса
+        <SMTPServerExternalPort>587</SMTPServerExternalPort>
+        Почтовый сервер для отправки почты на внутреннее адреса
+        <SMTPServerInternal>post.e-moskva.ru</SMTPServerInternal>
+        Порт почтового сервера для отправки почты на внутреннее адреса
+        <SMTPServerInternalPort>25</SMTPServerInternalPort>
+        Адрес для отправки сообщений по внутреней почте
+        <InternalAddress>windows_support@e-moskva.ru</InternalAddress>
+        </UtilSettings>
+    Настройки создания OU
     <CreateOU>
         Путь где будет создана OU с ресурсной группой
         <PathCreateGroups>OU=Groups,OU=DataCenterEM01,DC=passport,DC=local</PathCreateGroups>
@@ -12,14 +26,13 @@
         Названия групп, которые будут по умолчанию включеный в созданную группу
         <DefaultAddMember>EM_linux_Admins,EM_DataCenter_Admins</DefaultAddMember>
         </CreateOU>
-
+    Настройки создания Linux серверов
     <CreateCMP>
         Имя ресурсной группы
         <NameGroupn>IS_</NameGroupn>
         <NameGroupk>_Admins</NameGroupk>
-        Параметр $msSFU30NisDomain
         </CreateCMP>
-
+    Настройки создания пользователей
     <CreateUsers>
         Содержание отправляемого файла
         <filetext>
