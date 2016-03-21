@@ -15,10 +15,11 @@ catch [System.Exception] {
     LogAdd ("Ошибка при импорте конфигурации: " +$Error[0])
     break   
     }
+$settingsUtil = $Config.selectnodes(‘Main/UtilSettings’)
 $settingsOU = $Config.selectnodes(‘Main/CreateOU’)
 $settingsCMP = $Config.selectnodes(‘Main/CreateCMP’)
 $settingsUser = $Config.selectnodes(‘Main/CreateUsers’) 
-$settingsUtil = $Config.selectnodes(‘Main/UtilSettings’)
+$settingsResetPassword = $Config.selectnodes(‘Main/ResetPassword’)
 
 
 $Error[0]=$null
@@ -913,39 +914,78 @@ function usersearch{
     }
 #функция сброса пароля
 function resetpassword{
-    $sendemail=$false
-    $from=$null
-    $mycreds=$null
-    $SMTPServerExternal=$settingsUtil.SMTPServerExternal
-    $SMTPServerExternalPort=$settingsUtil.SMTPServerExternalPort
-    $from = $logName111.text
-    $secpasswd1 = $InputFpass111.text
-    $fileuser=$settingsUser.filetext
-    if ($from) {
-                $sendemail=$true
-            }
-    if ($secpasswd1 -and $from) {
-        $from111=($from -split '@')[0]
-        $secpasswd = ConvertTo-SecureString "$secpasswd1" -AsPlainText -Force
-        $mycreds = New-Object System.Management.Automation.PSCredential ($from111, $secpasswd)
-        }
-    $Password = get-random -count 11 -input (48..57 + 65..90+ 48..57+36..46+ 97..122) | % -begin { $pass = $null } -process {$pass += [char]$_} -end {$pass}
-    $Psw = Get-Random -Maximum 9999 -Minimum 1000
-    Set-ADAccountPassword $Global:resetuserpassword -NewPassword (ConvertTo-SecureString -AsPlainText -String $Password -force)
-    LogAdd ("Пароль сброшен")
-    $EmailAddress=$Inputpswdtext11.Text
-    $sam=$Global:resetuserpassword
+    param(
+        # Содержание тела письма (Сброс пароля)
+        [Parameter(Mandatory=$true)]
+        [string]
+        $Body=$settingsResetPassword.Body,
+        
+        # Тема письма (Сброс пароля)
+        [Parameter(Mandatory=$true)]
+        [string]
+        $Subject=$settingsResetPassword.Subject,
+        
+        # Почтовый сервер для отправки почты на внешние адреса
+        [Parameter(Mandatory=$true)]
+        [string]
+        $SMTPServerExternal=$settingsUtil.SMTPServerExternal,
+        
+        # Порт почтового сервера для отправки почты на внешние адреса
+        [Parameter(Mandatory=$true)]
+        [string]
+        $SMTPServerExternalPort=$settingsUtil.SMTPServerExternalPort,
+        
+        # Использование SSL для отправки на внешние адреса
+        [Parameter(Mandatory=$true)]
+        [string]
+        $SMTPServerExternalSSL=$settingsUtil.SMTPServerExternalSSL,
+        
+        # Папка, где будут лежать данные после сброса пароля
+        [Parameter(Mandatory=$true)]
+        [string]
+        $Path=$settingsResetPassword.Path
+        
+    )
+    begin{
+        $sendemail=$false
+        $from=$null
+        $mycreds=$null
+        $from = $logName111.text
+        $secpasswd1 = $InputFpass111.text
+        $fileuser=$settingsUser.filetext
+        if ($from) {
+            $sendemail=$true
+            }#end if
+        if ($secpasswd1 -and $from) {
+            $from111=($from -split '@')[0]
+            $secpasswd = ConvertTo-SecureString "$secpasswd1" -AsPlainText -Force
+            $mycreds = New-Object System.Management.Automation.PSCredential ($from111, $secpasswd)
+            }#end if
+        }#end begin
+    process{
+            $Password = get-random -count 11 -input (48..57 + 65..90+ 48..57+36..46+ 97..122) | % -begin { $pass = $null } -process {$pass += [char]$_} -end {$pass}
+            $Psw = Get-Random -Maximum 9999 -Minimum 1000
+            try {
+                Set-ADAccountPassword $Global:resetuserpassword -NewPassword (ConvertTo-SecureString -AsPlainText -String $Password -force) -ErrorAction Stop
+                LogAdd ("Пароль сброшен")
+                }#end try
+            catch [System.Exception] {
+                LogAdd ("Ошибка при сбросе пароля: "+$_)
+                break
+                }#end catch   
+            $EmailAddress=$Inputpswdtext11.Text
+            $sam=$Global:resetuserpassword
                 # Генерируем файл для пользователя
-                $txtPath = "C:\Work\New_users\Reset_password\"+$EmailAddress+".txt"
+                $txtPath = $Path+$EmailAddress+".txt"
                 $inFile = "Login:" + $sam + "     " + "Password:" + $Password
                 $inst=$fileuser -replace 'SAM',$sam
                 $inst > $txtPath
                 $inFile >> $txtPath
-                $txtPath1 = "C:\Work\New_users\Reset_password\Users.txt"
+                $txtPath1 = $Path+"Users.txt"
                 $inFile1 = $global:fiorestuser + "  " + $inFile +"     " + "E-mail:" + $EmailAddress + "     " + "Пароль от архива:" + $Psw
                 $inFile1 >> $txtPath1
                 # Запуск батника для создания запароленых архивов
-                cd C:\Work\New_users\Reset_password\
+                cd $Path
                 $SevenZipExecutablePath = "C:\Program files\7-Zip\7z.exe"
                 $Arg1="a"
                 $Arg2="$sam.7z"
@@ -953,27 +993,31 @@ function resetpassword{
                 $Arg4="-p$Psw"
                 & $SevenZipExecutablePath ($Arg1,$Arg2,$Arg3,$Arg4)
                 if ($CheckBox11.Checked) {
-                    $body=@"
-            Добрый день.
-
-            Вам отправлены новые учетные данные для авторизации в домене passport.local
-            Учетные данные для авторизации во вложении, в соответствии с практикой передачи конфиденциальных данных сведения находятся в архиве с паролем, пароль на архив готовы передать по телефону в подписи письма.
-
-            С уважением,
-
-            Управление системных и прикладных сервисов
-            ГБУ «Инфогород»
-
-            Тел.: +7(495) 989-80-34  (1354,1398,1317) 
-"@
-                    $Subject='Новые учетные данные для домена passport.local'
-                    $Attachments = "C:\Work\New_users\Reset_password\$sam.7z"
+                    $Attachments = $Path+"$sam.7z"
                     $Encoding = [System.Text.Encoding]::UTF8
-                    send-mailmessage -SmtpServer $SMTPServerExternal -From $from -Subject $Subject -To $EmailAddress -Body $body -Credential $mycreds -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerExternalPort -UseSsl -Encoding $Encoding
-                    LogAdd ("Письмо отправлено")
-                    }
-
-    }
+                    if($SMTPServerExternalSSL -eq $true){
+                        try {
+                            send-mailmessage -SmtpServer $SMTPServerExternal -From $from -Subject $Subject -To $EmailAddress -Body $body -Credential $mycreds -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerExternalPort -UseSsl -Encoding $Encoding -ErrorAction Stop
+                            LogAdd ("Письмо отправлено")
+                            }#end try
+                        catch [System.Exception] {
+                            LogAdd ("Ошибка при отправке письма: "+ $_)
+                            }#end catch
+                        }#end if
+                    else{
+                        try {
+                            send-mailmessage -SmtpServer $SMTPServerExternal -From $from -Subject $Subject -To $EmailAddress -Body $body -Credential $mycreds -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerExternalPort -Encoding $Encoding -ErrorAction Stop
+                            LogAdd ("Письмо отправлено")
+                            }#end try
+                        catch [System.Exception] {
+                            LogAdd ("Ошибка при отправке письма: "+ $_)
+                            }#end catch
+                        }#end else
+                    
+                    
+                    }#end if   
+     }#end process
+    }#end function
 function Check1 {
     if (!$CheckBox11.Checked) {$logName111.Enabled = $false; $InputFpass111.Enabled = $false} 
     else {$logName111.Enabled = $true; $InputFpass111.Enabled = $true}
