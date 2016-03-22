@@ -39,22 +39,21 @@
         Сервер, который хостит необходимую ДНС зону (DNSZone)
         <DNSServer>is129-bi-dc01.passport.local</DNSServer>
         Группа рассылки, на которую будут отправлены файлы ключей
-        <KeyRecipient>sysop.datacenter@e-moskva.ru</KeyRecipient>
+        <KeyRecipient>datacenter.sysop.support@it.mos.ru</KeyRecipient>
         </CreateCMP>
     Настройки создания пользователей
     <CreateUsers>
         OU, где будут создаваться пользователи
-        <OUuser>"OU=Users,OU=DataCenterEM01,DC=passport,DC=local"</OUuser>
+        <OUuser>OU=Users,OU=DataCenterEM01,DC=passport,DC=local</OUuser>
         Текст, который выдается в форме при дублирующем пользователей
-        <TextForm>
-            Если это тотже самый пользователь, то нажмите Отмена 
+        <TextForm>Если это тотже самый пользователь, то нажмите Отмена 
             или введите новый логин/ФИО и нажмите Создать:
             </TextForm>
         Содержание тела письма СУД
         <BodySud>
-            Создана учтеная запись для пользователя: $Detailedname
-            Логин: $SAM
-            Пароль: $Password
+            Создана учтеная запись для пользователя: Detailedname
+            Логин: SAM
+            Пароль: Password
             </BodySud>
         Адрес потчового ящмка СУД   
         <SudAddress>access@e-moskva.ru</SudAddress>
