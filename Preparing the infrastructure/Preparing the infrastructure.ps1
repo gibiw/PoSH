@@ -441,7 +441,18 @@ function createCMP {
         catch [System.Exception] {
             LogAdd ('Не удалось загрузить параметры из файла: ' + $_)
             }#end catch
-
+        $from1=$null
+        $mycreds1=$null
+        $from1 = $logNamekeys.text
+        $secpasswd2 = $InputFpasskeys.text
+        if ($secpasswd2 -and $from1) {
+            $from111=($from1 -split '@')[0]
+            $secpasswd = ConvertTo-SecureString "$secpasswd2" -AsPlainText -Force
+            $mycreds1 = New-Object System.Management.Automation.PSCredential ($from111, $secpasswd)
+            }#end if
+        if ($from){
+            $sendemail=$true
+            }#end if
         $progressBar1.minimum = 0
         $progressBar1.maximum =3+$comps.ComputerName.count*2
         $progressBar1.step = 1
@@ -537,9 +548,9 @@ function createCMP {
                     $Encoding = [System.Text.Encoding]::UTF8
                     $Error[0]=$null
                     $body = "Ключи во вложении"
-                    if($SMTPServerInternalSSL -eq $true){
+                    if($SMTPServerExternalSSL -eq $true){
                         try {
-                            send-mailmessage -SmtpServer $SMTPServerInternal -From $InternalAddress -Subject $Subject -To $KeyRecipient -Body $body -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerInternalPort -Encoding $Encoding -UseSsl
+                            send-mailmessage -SmtpServer $SMTPServerExternal -From $from1 -Credential $mycreds1 -Subject $Subject -To $KeyRecipient -Body $body -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerExternalPort -Encoding $Encoding -UseSsl
                             LogAdd ("Ключи успешно отправлены")    
                             }#end try
                         catch [System.Exception] {
@@ -548,7 +559,7 @@ function createCMP {
                         }#end if
                     else {
                         try {
-                            send-mailmessage -SmtpServer $SMTPServerInternal -From $InternalAddress -Subject $Subject -To $KeyRecipient -Body $body -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerInternalPort -Encoding $Encoding
+                            send-mailmessage -SmtpServer $SMTPServerExternal -From $from1 -Credential $mycreds1 -Subject $Subject -To $KeyRecipient -Body $body -Attachments $attachments -DeliveryNotificationOption OnSuccess -Port $SMTPServerExternalPort -Encoding $Encoding
                             LogAdd ("Ключи успешно отправлены")    
                             }#end try
                         catch [System.Exception] {
@@ -565,6 +576,11 @@ function createCMP {
 function Check {
     if (!$CheckBox.Checked) {$logName.Enabled = $false; $InputFpass.Enabled = $false} 
     else {$logName.Enabled = $true; $InputFpass.Enabled = $true}
+    }
+# функиция авторизации для отправки сообщения
+function Check2 {
+    if (!$CheckBox1.Checked) {$logNamekeys.Enabled = $false; $InputFpasskeys.Enabled = $false} 
+    else {$logNamekeys.Enabled = $true; $InputFpasskeys.Enabled = $true}
     }
 # Функция создания пользователей
 function createuser {
@@ -1063,6 +1079,16 @@ $gdeOUr.ReadOnly = "true"
 #Отправка сообщения
 create_label ($CheckBox1 = New-Object System.Windows.Forms.CheckBox ) 'Отправка ключей' 260 100 100 25 $TabPage2 a
 $CheckBox1.Checked = $false
+$CheckBox1.Add_Click($Function:Check2)
+create_label ($logkeys = New-Object windows.Forms.Label ) 'Введите e-mail:' 260 120 100 25 $TabPage2 a
+create_label ($logNamekeys = New-Object windows.Forms.TextBox ) '' 260 140 200 25 $TabPage2 
+$logNamekeys.add_TextChanged($Function:Check2)
+create_label ($labFpasskeys = New-Object windows.Forms.Label ) 'Введите пароль:' 260 170 100 25 $TabPage2 a
+create_label ($InputFpasskeys = New-Object windows.Forms.TextBox ) '' 260 190 200 25 $TabPage2 
+$InputFpasskeys.PasswordChar = "*"
+$InputFpasskeys.add_TextChanged($Function:Check2)
+$logNamekeys.Enabled = $false
+$InputFpasskeys.Enabled = $false
 #Объявление формы пути для сохранения ключей
 create_label ($keys = New-Object windows.Forms.Label ) 'Сохранить ключи в папке:' 8 220 240 150 $TabPage2 a
 create_label ($keysr = New-Object windows.Forms.TextBox ) '' 8 240 350 25 $TabPage2 

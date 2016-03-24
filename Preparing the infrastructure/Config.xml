@@ -8,7 +8,7 @@
         Использование SSL для отправки на внешние адреса
         <SMTPServerExternalSSL>true</SMTPServerExternalSSL>
         Почтовый сервер для отправки почты на внутреннее адреса
-        <SMTPServerInternal>post.e-moskva.ru</SMTPServerInternal>
+        <SMTPServerInternal>mx01.mos.ru</SMTPServerInternal>
         Порт почтового сервера для отправки почты на внутреннее адреса
         <SMTPServerInternalPort>25</SMTPServerInternalPort>
         Использование SSL для отправки на внутреннее адреса
