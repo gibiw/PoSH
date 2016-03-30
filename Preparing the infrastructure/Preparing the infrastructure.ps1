@@ -566,6 +566,13 @@ function createCMP {
                             LogAdd ("Ошибка при отправке сообщения с ключами : " + $_)
                             }#end catch    
                        }#end else
+                    try {
+                        Remove-Item -Path $Attachments -Force -ErrorAction Stop
+                        }
+                    catch [System.Exception] {
+                        LogAdd ("Ошибка при удалении ключей" + $_)             
+                        }   
+                                       
                     }#end if
         $progressBar1.performstep()
         LogAdd ("Ключи созданы! Готово")
