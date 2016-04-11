@@ -1,6 +1,5 @@
 ﻿function fix_oem {
     Param ($ip,$pass,$log,$ke)
-    #$info =$upadateneed
     $secpasswd = ConvertTo-SecureString "$pass" -AsPlainText -Force
     $admincred = New-Object System.Management.Automation.PSCredential($log,$secpasswd)
     Invoke-Command -ComputerName $ip -Credential $admincred -ArgumentList $ke,$ip -ScriptBlock{
@@ -82,47 +81,5 @@
             }#end scriptblock
     }
 $hostname=read-host -Prompt "Введите КЕ"
-$secpasswdwsus = ConvertTo-SecureString "^Gfbcv5R" -AsPlainText -Force
-$admincredwsus = New-Object System.Management.Automation.PSCredential('Administrator',$secpasswdwsus)
-$upadateneed = Invoke-Command -ComputerName 10.126.240.47 -Credential $admincredwsus -ArgumentList $hostname -ScriptBlock{
-    param($hostname)
-    function Get-DatabaseData{
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory=$true)]
-            [string]$servername
-            )
-        if($hostname[0] -match "[\d]" -and $hostname -match "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"){
-            $query = "SELECT * FROM server_info_new where HPC_NETWORK_JT_INTERFACE_IP like '$servername'"
-            }#end if
-        elseif($hostname[0] -match "[a-z]" -and $hostname -match "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"){
-            $query = "SELECT * FROM server_info_new where LOGICAL_NAME like '$servername'"
-            }#end elseif
-        else{
-            $query = "SELECT * FROM server_info_new where HPC_HOST_NAME like '$servername'"
-            }#end else
-
-        $dataSource = "10.126.242.1"
-        $database = "Cmdb"
-        $user='sa'
-        $pwd='Qwe`123'
-        $connection = New-Object System.Data.SqlClient.SqlConnection
-        $connection.ConnectionString = "Server=$dataSource;Database=$database;uid=$user;pwd=$pwd;Integrated Security=false;"
-        $connection.Open()
-
-        $command = $connection.CreateCommand()
-        $command.CommandText = $query
-        $result = $command.ExecuteReader()
-        $table = new-object “System.Data.DataTable”
-        $table.Load($result)
-        return $table
-        }
-
-    Get-DatabaseData -servername $hostname | select *
-    }
-
-$ip = $upadateneed.HPC_NETWORK_JT_INTERFACE_IP
-$pass = $upadateneed.HPC_PASSWORD
-$log = $upadateneed.HPC_LOG_PASS
-$ke=$upadateneed.LOGICAL_NAME
-fix_oem -ip $ip -pass $pass -log $log -ke $ke
+$ServerData=Get-ServerData -servername $hostname
+fix_oem -ip $ServerData.HPC_NETWORK_JT_INTERFACE_IP -pass $ServerData.HPC_PASSWORD -log $ServerData.HPC_LOG_PASS -ke $ServerData.LOGICAL_NAME
