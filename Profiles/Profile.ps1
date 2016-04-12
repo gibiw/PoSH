@@ -139,7 +139,7 @@ if (!(Test-Path -Path $profile.CurrentUserAllHosts)) {
     .$profile.CurrentUserAllHosts
     }
 else{
-    if((Get-Content -Path $profile.CurrentUserAllHosts | select -First 1) -ne ((Invoke-WebRequest -uri 'https://raw.githubusercontent.com/gibiw/PoSH/master/Profiles/Profile.ps1').content | select -First 1)){
+    if(Compare-Object -ReferenceObject (Get-Content -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1')) -DifferenceObject (Get-Content -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1'))){
         Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.CurrentUserAllHosts -Force
         .$profile.CurrentUserAllHosts
         }
