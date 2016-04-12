@@ -133,8 +133,13 @@ else{
         }
     }
 #Проверка PsExec
- if(!(Test-Path -Path C:\Windows\System32\Psexec.exe)){
+if(!(Test-Path -Path ($PowerShellScriptsPath+'\Psexec.exe'))){
      [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null 
-     [System.IO.Compression.ZipFile]::ExtractToDirectory(($PowerShellScriptsFolder+"\Utils\PsExec.zip"),'C:\Windows\System32\')    
-    }           
-        
+     [System.IO.Compression.ZipFile]::ExtractToDirectory(($PowerShellScriptsFolder+"\Utils\PsExec.zip"),($PowerShellScriptsPath))    
+    }
+#Проверка профиля
+if (!(Test-Path -Path $profile.AllUsersAllHosts)) {
+    New-Item -ItemType file -Path $profile.AllUsersAllHosts -force
+    Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.AllUsersAllHosts -Force
+    .$profile.AllUsersAllHosts
+    }
