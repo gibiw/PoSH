@@ -65,7 +65,22 @@ function Get-ServerData {
         Get-DatabaseData -servername $servername -dataSource $dataSource -database $database -DBuser $DBuser -DBpwd $DBpwd | select *
         }
     return $ServerData  
-}
+    }
+function Download-File {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Url,
+        [Parameter(Mandatory=$true)]
+        [string]$Path    
+        )
+    $Url | % { 
+            $uri = new-Object System.Uri $_ ; 
+            $localPath = "$Path\$($uri.Segments[-1])"; 
+            $webClient = new-object System.Net.WebClient;
+            $webClient.DownloadFile($uri,$localPath); 
+            }
+    }
+
 #Объявление переменных
 $PowerShellScriptsFolder='C:\PowerShellScripts'
 $PowerShellScriptsFolderNew='C:\'
@@ -75,7 +90,7 @@ $filesToDownload = "https://github.com/gibiw/PoSH/archive/master.zip"
 #Проверка и создание папки
 try{
     if (!(Test-Path -Path $PowerShellScriptsFolder)){
-        New-Item -Path $PowerShellScriptsFolderNew -ItemType Directory -Name PowerShellScripts -ErrorAction Stop
+        New-Item -Path $PowerShellScriptsFolderNew -ItemType Directory -Name PowerShellScripts -ErrorAction Stop | Out-Null
         }
     }
 catch{
@@ -87,22 +102,35 @@ catch{
 if (!((Get-Item env:path).value -like "*$PowerShellScriptsPath*")){
     $env:path = $env:path + ";$PowerShellScriptsPath"
     } 
-
-#Провкарка достпности интернета
-if(Test-NetConnection -InformationLevel Quiet){
-    $filesToDownload | % { 
-        $uri = new-Object System.Uri $_ ; 
-        $localPath =  "$PowerShellScriptsFolder\$($uri.Segments[-1])"; 
-        Write-Host "Writing $localPath" ;
-        $webClient = new-object System.Net.WebClient;
-        $webClient.DownloadFile($uri,$localPath); 
-        }
-    [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null 
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($localPath, $PowerShellScriptsFolder) 
-    Remove-Item -Path $localPath -Force
-    Copy-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\*") -Destination $PowerShellScriptsFolder -Force -Recurse
-    Remove-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\") -Force -Recurse
-    }
+# Загрузка скриптов
+if(Test-Path -Path ($PowerShellScriptsFolder+'\version.txt')){
+            if((Get-Content -Path ($PowerShellScriptsFolder+'\version.txt')) -ne (Invoke-WebRequest -uri 'https://raw.githubusercontent.com/gibiw/PoSH/master/Version.txt').content){
+                if(Test-NetConnection -InformationLevel Quiet -ErrorAction Stop){
+                    Download-File -Url $filesToDownload -Path $PowerShellScriptsFolder
+                    [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null 
+                    [System.IO.Compression.ZipFile]::ExtractToDirectory(($PowerShellScriptsFolder+"\master.zip"), $PowerShellScriptsFolder) 
+                    Remove-Item -Path ($PowerShellScriptsFolder+"\master.zip") -Force
+                    Copy-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\*") -Destination $PowerShellScriptsFolder -Force -Recurse
+                    Remove-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\") -Force -Recurse
+                    }
+                else{
+                    Write-Host "Интернет не доступен" -ForegroundColor Red
+                    }    
+                }
+            }
 else{
-    Write-Host "Интернет не доступен" -ForegroundColor Red
+    if(Test-NetConnection -InformationLevel Quiet -ErrorAction Stop){
+        Download-File -Url $filesToDownload -Path $PowerShellScriptsFolder
+        [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null 
+        [System.IO.Compression.ZipFile]::ExtractToDirectory(($PowerShellScriptsFolder+"\master.zip"), $PowerShellScriptsFolder) 
+        Remove-Item -Path ($PowerShellScriptsFolder+"\master.zip") -Force
+        Copy-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\*") -Destination $PowerShellScriptsFolder -Force -Recurse
+        Remove-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\") -Force -Recurse
+        }
+    else{
+        Write-Host "Интернет не доступен" -ForegroundColor Red
+        }
     }
+
+            
+        
