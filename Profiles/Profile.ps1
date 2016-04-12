@@ -119,6 +119,7 @@ if(Test-Path -Path ($PowerShellScriptsFolder+'\version.txt')){
                 }
             }
 else{
+    
     if(Test-NetConnection -InformationLevel Quiet -ErrorAction Stop){
         Download-File -Url $filesToDownload -Path $PowerShellScriptsFolder
         [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null 
@@ -131,6 +132,9 @@ else{
         Write-Host "Интернет не доступен" -ForegroundColor Red
         }
     }
-
-            
+#Проверка PsExec
+ if(!(Test-Path -Path C:\Windows\System32\Psexec.exe)){
+     [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null 
+     [System.IO.Compression.ZipFile]::ExtractToDirectory(($PowerShellScriptsFolder+"\Utils\PsExec.zip"),'C:\Windows\System32\')    
+    }           
         
