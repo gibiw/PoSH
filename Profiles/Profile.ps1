@@ -139,14 +139,14 @@ if(!(Test-Path -Path ($PowerShellScriptsPath+'\Psexec.exe'))){
      [System.IO.Compression.ZipFile]::ExtractToDirectory(($PowerShellScriptsFolder+"\Utils\PsExec.zip"),($PowerShellScriptsPath))    
     }
 #Проверка профиля
-if (!(Test-Path -Path $profile.CurrentUserCurrentHost)) {
-    New-Item -ItemType file -Path $profile.CurrentUserCurrentHost -force
-    Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.$profile.CurrentUserCurrentHost -Force
-    .$profile.CurrentUserCurrentHost
+if (!(Test-Path -Path $profile.CurrentUserAllHosts)) {
+    New-Item -ItemType file -Path $profile.CurrentUserAllHosts -force
+    Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.CurrentUserAllHosts -Force
+    .$profile.CurrentUserAllHosts
     }
 else{
-    if((Get-Content -Path $profile.CurrentUserCurrentHost | select -First 1) -ne ((Invoke-WebRequest -uri 'https://raw.githubusercontent.com/gibiw/PoSH/master/Profiles/Profile.ps1').content | select -First 1)){
-        Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.CurrentUserCurrentHost -Force
-        .$profile.CurrentUserCurrentHost
+    if((Get-Content -Path $profile.CurrentUserAllHosts | select -First 1) -ne ((Invoke-WebRequest -uri 'https://raw.githubusercontent.com/gibiw/PoSH/master/Profiles/Profile.ps1').content | select -First 1)){
+        Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.CurrentUserAllHosts -Force
+        .$profile.CurrentUserAllHosts
         }
     }
