@@ -89,7 +89,7 @@ try{
         }
     }
 catch{
-    Write-Host "Ошбика при создании папки: $_" -ForegroundColor Red
+    Write-Host "Error created folder: $_" -ForegroundColor Red
     break
     }
 
@@ -109,7 +109,7 @@ if(Test-Path -Path ($PowerShellScriptsFolder+'\version.txt')){
                     Remove-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\") -Force -Recurse
                     }
                 else{
-                    Write-Host "Интернет не доступен" -ForegroundColor Red
+                    Write-Host "Internet not avalability" -ForegroundColor Red
                     }    
                 }
             }
@@ -124,7 +124,7 @@ else{
         Remove-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\") -Force -Recurse
         }
     else{
-        Write-Host "Интернет не доступен" -ForegroundColor Red
+        Write-Host "Internet not avalability" -ForegroundColor Red
         }
     }
 
