@@ -139,8 +139,14 @@ if(!(Test-Path -Path ($PowerShellScriptsPath+'\Psexec.exe'))){
      [System.IO.Compression.ZipFile]::ExtractToDirectory(($PowerShellScriptsFolder+"\Utils\PsExec.zip"),($PowerShellScriptsPath))    
     }
 #Проверка профиля
-if (!(Test-Path -Path $profile.AllUsersAllHosts)) {
-    New-Item -ItemType file -Path $profile.AllUsersAllHosts -force
-    Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.AllUsersAllHosts -Force
-    .$profile.AllUsersAllHosts
+if (!(Test-Path -Path $profile.CurrentUserCurrentHost)) {
+    New-Item -ItemType file -Path $profile.CurrentUserCurrentHost -force
+    Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.$profile.CurrentUserCurrentHost -Force
+    .$profile.CurrentUserCurrentHost
+    }
+else{
+    if((Get-Content -Path $profile.CurrentUserCurrentHost | select -First 1) -ne ((Invoke-WebRequest -uri 'https://raw.githubusercontent.com/gibiw/PoSH/master/Profiles/Profile.ps1').content | select -First 1)){
+        Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.CurrentUserCurrentHost -Force
+        .$profile.CurrentUserCurrentHost
+        }
     }
