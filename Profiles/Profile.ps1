@@ -1,17 +1,11 @@
-#Version 1.4
-#Функция получения данных о серверах
-#####################################################################
 function Get-ServerData {
     param(
-    #Параметр, который должен содержать хостнейм, КЕ или IP адрес сервера 
     [Parameter(Mandatory=$true)]
     [string]$servername
     )
-    #Параметры подключения к удаленному серверу
     [string]$usernameremoteserver='.\Administrator'
     [string]$passwordremoteserver='^Gfbcv5R'
     [string]$ipremoteserver='10.126.240.47'
-    #Параметры подключения к базу СМДБ
     [string]$dataSource = '10.126.242.1'
     [string]$database = 'Cmdb'
     [string]$DBuser='sa'
@@ -82,13 +76,13 @@ function Download-File {
             }
     }
 
-#Объявление переменных
+
 $PowerShellScriptsFolder='C:\PowerShellScripts'
 $PowerShellScriptsFolderNew='C:\'
 $PowerShellScriptsPath='C:\PowerShellScripts\Scripts'
 $filesToDownload = "https://github.com/gibiw/PoSH/archive/master.zip"
 
-#Проверка и создание папки
+
 try{
     if (!(Test-Path -Path $PowerShellScriptsFolder)){
         New-Item -Path $PowerShellScriptsFolderNew -ItemType Directory -Name PowerShellScripts -ErrorAction Stop | Out-Null
@@ -99,11 +93,11 @@ catch{
     break
     }
 
-#Проверка переменной Path
+
 if (!((Get-Item env:path).value -like "*$PowerShellScriptsPath*")){
     $env:path = $env:path + ";$PowerShellScriptsPath"
     } 
-# Загрузка скриптов
+
 if(Test-Path -Path ($PowerShellScriptsFolder+'\version.txt')){
             if((Get-Content -Path ($PowerShellScriptsFolder+'\version.txt')) -ne (Invoke-WebRequest -uri 'https://raw.githubusercontent.com/gibiw/PoSH/master/Version.txt').content){
                 if(Test-NetConnection -InformationLevel Quiet -ErrorAction Stop){
@@ -133,12 +127,12 @@ else{
         Write-Host "Интернет не доступен" -ForegroundColor Red
         }
     }
-#Проверка PsExec
+
 if(!(Test-Path -Path ($PowerShellScriptsPath+'\Psexec.exe'))){
      [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null 
      [System.IO.Compression.ZipFile]::ExtractToDirectory(($PowerShellScriptsFolder+"\Utils\PsExec.zip"),($PowerShellScriptsPath))    
     }
-#Проверка профиля
+
 if (!(Test-Path -Path $profile.CurrentUserAllHosts)) {
     New-Item -ItemType file -Path $profile.CurrentUserAllHosts -force
     Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.CurrentUserAllHosts -Force
