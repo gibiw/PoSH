@@ -66,3 +66,43 @@ function Get-ServerData {
         }
     return $ServerData  
 }
+#Объявление переменных
+$PowerShellScriptsFolder='C:\PowerShellScripts'
+$PowerShellScriptsFolderNew='C:\'
+$PowerShellScriptsPath='C:\PowerShellScripts\Scripts'
+$filesToDownload = "https://github.com/gibiw/PoSH/archive/master.zip"
+
+#Проверка и создание папки
+try{
+    if (!(Test-Path -Path $PowerShellScriptsFolder)){
+        New-Item -Path $PowerShellScriptsFolderNew -ItemType Directory -Name PowerShellScripts -ErrorAction Stop
+        }
+    }
+catch{
+    Write-Host "Ошбика при создании папки: $_" -ForegroundColor Red
+    break
+    }
+
+#Проверка переменной Path
+if (!((Get-Item env:path).value -like "*$PowerShellScriptsPath*")){
+    $env:path = $env:path + ";$PowerShellScriptsPath"
+    } 
+
+#Провкарка достпности интернета
+if(Test-NetConnection -InformationLevel Quiet){
+    $filesToDownload | % { 
+        $uri = new-Object System.Uri $_ ; 
+        $localPath =  "$PowerShellScriptsFolder\$($uri.Segments[-1])"; 
+        Write-Host "Writing $localPath" ;
+        $webClient = new-object System.Net.WebClient;
+        $webClient.DownloadFile($uri,$localPath); 
+        }
+    [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null 
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($localPath, $PowerShellScriptsFolder) 
+    Remove-Item -Path $localPath -Force
+    Copy-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\*") -Destination $PowerShellScriptsFolder -Force -Recurse
+    Remove-Item -Path ($PowerShellScriptsFolder+"\PoSH-master\") -Force -Recurse
+    }
+else{
+    Write-Host "Интернет не доступен" -ForegroundColor Red
+    }
