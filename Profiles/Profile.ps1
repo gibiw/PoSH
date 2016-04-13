@@ -139,7 +139,7 @@ if (!(Test-Path -Path $profile.CurrentUserAllHosts)) {
     .$profile.CurrentUserAllHosts
     }
 else{
-    if(Compare-Object -ReferenceObject (Get-Content -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1')) -DifferenceObject (Get-Content -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1'))){
+ if((Compare-Object -ReferenceObject (Get-Content -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1')) -DifferenceObject (Get-Content -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1'))) -eq $null){
         Copy-Item -Path ($PowerShellScriptsFolder+'\Profiles\Profile.ps1') -Destination $profile.CurrentUserAllHosts -Force
         .$profile.CurrentUserAllHosts
         }
