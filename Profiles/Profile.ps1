@@ -52,7 +52,7 @@ function Get-ServerData {
             $command = $connection.CreateCommand()
             $command.CommandText = $query
             $result = $command.ExecuteReader()
-            $table = new-object “System.Data.DataTable”
+            $table = new-object 'System.Data.DataTable'
             $table.Load($result)
             return $table
             }
