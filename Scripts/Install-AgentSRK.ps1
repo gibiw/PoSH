@@ -79,7 +79,7 @@ foreach($comp in $comps){
                         #Запускаем процесс установки
                         $ip= '\\'+$ServerData.HPC_NETWORK_JT_INTERFACE_IP
                         cd C:\windows\System32
-                        .\PsExec.exe $ip -u $admin -p $pass -s -d $filebatc
+                        PsExec.exe $ip -u $admin -p $pass -s -d $filebatc
                         start-sleep -Seconds 30
                         }
 # Счетчик процесса выполнения
