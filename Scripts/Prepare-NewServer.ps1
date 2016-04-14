@@ -21,9 +21,8 @@
         $shluzall=$comp.shluzall # Шлюз до остальных серверов
         $ad=$comp.ad # Добавление в домен или нет
         $is=$comp.is # Название ИС
-        $hostname=$comp.ip
         #получаем учетные данные для авторизации на удаленном сервере
-        $ServerData=Get-ServerData -servername $hostname
+        $ServerData=Get-ServerData -servername $comp.ip
         $admin = $ServerData.HPC_LOG_PASS # логин администратора
         $pass = $ServerData.HPC_PASSWORD # пароль администратора
         $ipmgmt=$ServerData.HPC_NETWORK_JT_INTERFACE_IP # менеджмент IP 
