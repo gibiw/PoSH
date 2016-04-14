@@ -95,7 +95,7 @@ do{
                 #Запускаем батник с помощью PSExec от имени SYSTEM
                 $ip= '\\'+$comp.ip
                 cd C:\Windows\system32
-                .\PsExec.exe $ip -u $admin -p $pass -s -d C:\installupdate.bat
+                PsExec.exe $ip -u $admin -p $pass -s -d C:\installupdate.bat
                 }
             # Если процесс обновления еще идет, то сообщяем об этом
             else{
