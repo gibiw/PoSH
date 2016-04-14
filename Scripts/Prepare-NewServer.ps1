@@ -28,7 +28,7 @@
         $ipmgmt=$ServerData.HPC_NETWORK_JT_INTERFACE_IP # менеджмент IP 
         $secpasswd = ConvertTo-SecureString "$pass" -AsPlainText -Force
         $admincred = New-Object System.Management.Automation.PSCredential($admin,$secpasswd)
-        Invoke-Command -ComputerName $upadateneed.HPC_NETWORK_JT_INTERFACE_IP -Credential $admincred -argumentlist $shluzwsus,$shluzall,$is,$ipmgmt,$ad -ScriptBlock{
+        Invoke-Command -ComputerName $ServerData.HPC_NETWORK_JT_INTERFACE_IP -Credential $admincred -argumentlist $shluzwsus,$shluzall,$is,$ipmgmt,$ad -ScriptBlock{
             param(
                 $shluzwsus,
                 $shluzall,
