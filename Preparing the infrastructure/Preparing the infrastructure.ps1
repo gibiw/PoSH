@@ -858,6 +858,7 @@ function createuser {
                                 }#end if            
                             elseif($bodyto -eq 3){
                                 $Subject = $Subject3
+                                $Attachments = $afolder
                                 }#end if
                             $Encoding = [System.Text.Encoding]::UTF8
                             try {
