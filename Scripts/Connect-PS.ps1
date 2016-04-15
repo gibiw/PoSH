@@ -2,9 +2,9 @@
     # Server name
     [Parameter(Mandatory=$true)]
     [string]
-    $Hostname
+    $servername
     )
-$ServerData=get-ServerData -servername $hostname
+$ServerData=get-ServerData -servername $servername
 
 $secpasswd = ConvertTo-SecureString $ServerData.HPC_PASSWORD -AsPlainText -Force
 $admincred = New-Object System.Management.Automation.PSCredential($ServerData.HPC_LOG_PASS,$secpasswd)

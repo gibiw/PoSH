@@ -2,9 +2,9 @@
     # Server name
     [Parameter(Mandatory=$true)]
     [string]
-    $Hostname
+    $servername
     )
-$ServerData=get-ServerData -servername $hostname
+$ServerData=get-ServerData -servername $servername
 
 function Connect-Mstsc {
     [cmdletbinding(SupportsShouldProcess,DefaultParametersetName="UserPassword")]
