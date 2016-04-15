@@ -2,7 +2,7 @@
     # Server name
     [Parameter(Mandatory=$true)]
     [string]
-    $hostname
+    $servername
     )
 
 function fix_oem {
@@ -87,5 +87,5 @@ function fix_oem {
                         }#end elseif
             }#end scriptblock
     }
-$ServerData=Get-ServerData -servername $hostname
+$ServerData=Get-ServerData -servername $servername
 fix_oem -ip $ServerData.HPC_NETWORK_JT_INTERFACE_IP -pass $ServerData.HPC_PASSWORD -log $ServerData.HPC_LOG_PASS -ke $ServerData.LOGICAL_NAME
