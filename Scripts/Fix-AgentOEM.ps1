@@ -1,4 +1,11 @@
-﻿function fix_oem {
+﻿Param(
+    # Server name
+    [Parameter(Mandatory=$true)]
+    [string]
+    $hostname
+    )
+
+function fix_oem {
     Param ($ip,$pass,$log,$ke)
     $secpasswd = ConvertTo-SecureString "$pass" -AsPlainText -Force
     $admincred = New-Object System.Management.Automation.PSCredential($log,$secpasswd)
@@ -80,6 +87,5 @@
                         }#end elseif
             }#end scriptblock
     }
-$hostname=read-host -Prompt "Введите КЕ"
 $ServerData=Get-ServerData -servername $hostname
 fix_oem -ip $ServerData.HPC_NETWORK_JT_INTERFACE_IP -pass $ServerData.HPC_PASSWORD -log $ServerData.HPC_LOG_PASS -ke $ServerData.LOGICAL_NAME
