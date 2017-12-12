@@ -82,7 +82,17 @@
                         "SCVMNetwork Name: " + $SCVMNetwork.Name +"  External IP Address: " + $ip
                     }
                 }
-            }
+                else {
+                    $discription=(Get-SCVMNetwork -Name $SCVMNetwork -VmmServer $VmmServer | where {$_.owner -eq $id}).Description
+                    $ExternalIP=($discription -split 'External')[1]
+                    $ExternalIP=($ExternalIP -split '=')[1] 
+                    if($ExternalIP -ne 'No'){
+                        $newdiscription=$discription -replace $ExternalIP,'No'
+                        Get-SCVMNetwork -Name $SCVMNetwork -VmmServer $VmmServer | where {$_.owner -eq $id} | Set-SCVMNetwork -Description $newdiscription -VmmServer $VmmServer | out-null
+                        "SCVMNetwork Name: " + $SCVMNetwork.Name +"  External IP Address: No"
+                    }
+                }    
+        }
            
 		}
         catch 
