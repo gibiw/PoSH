@@ -1,0 +1,59 @@
+        <table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0 width=0 align=center>
+            <tr>
+                <td colspan=3 valign=top>
+                    <img src="cid:image1">
+                    <br>
+                    <br>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>
+                        <span lang=EN-GB style='font-size:10.0pt;font-family:"Tahoma",sans-serif;
+                            mso-fareast-font-family:"Tahoma";color:black;mso-ansi-language:EN-GB;
+                            mso-fareast-language:EN-GB;'>   
+                            <i>
+                                To Sharda, Monish
+                            </i>
+                            <br>
+                            <br>
+                                Dear Colleague,
+                            <br>
+                            <br>
+                                The password for your Lumileds account: monish.sharda@lumileds.com will expire on April 2nd, 2018.<br>
+                                To prevent disabling of your account you must change the password on or before April 2nd, 2018.
+                            <br>
+                            <br>
+                                For instructions on how to reset your password 
+                                <a href="https://lumileds.sharepoint.com/:w:/r/sites/STS20150903073006/office365blog/usermanagement/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bd8d8c85e-d858-454b-93b8-cbd18dc87a0c%7D&action=view&wdparaid=7C35B3F6">click here</a>.
+                            <br>
+                            <br>
+                                Note that changing your password also applies to the mailbox as configured on your Outlook,<br>
+                                mobile device such as iOS and Android. Please refer to the Self-help guides 
+                                <a href="https://lumileds.sharepoint.com/sites/STS20150903073006/office365blog/usermanagement/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSTS20150903073006%2Foffice365blog%2Fusermanagement%2FShared%20Documents%2Fuser%20password%20reset%20process%2FUpdatePassword-iOS-Android-Outlook.docx&parent=%2Fsites%2FSTS20150903073006%2Foffice365blog%2Fusermanagement%2FShared%20Documents%2Fuser%20password%20reset%20process">click here</a>.
+                            <br>
+                            <br>
+                                If you have any questions, please contact your IT helpdesk 
+                                <a href="https://philipsit.service-now.com/itgdn/allitems.do?sys_id=83544e866f7f460040ae0d55eb3ee4f1">click here</a>.
+                            <br>
+                            <br>
+                                Kind Regards,
+                            <br>
+                            <br>
+                        </span>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <img src="cid:image2">
+                    <br>
+                    <br>
+                    <b>
+                        <span style='font-size:16.0pt;line-height:105%;font-family:"Arial",sans-serif;color:black'>
+                            Lumileds IT
+                        </span>
+                    </b>
+                </td>
+            </tr>
+        </table>
